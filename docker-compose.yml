@@ -1,0 +1,42 @@
+version: "3"
+services:
+    mysql:
+        image: mysql:5.7
+        restart: always
+        ports: 
+            - "3306:3306"
+        environment:
+            MYSQL_DATABASE: ${db_name}
+            MYSQL_USER: ${db_user}
+            MYSQL_PASSWORD: ${db_password}
+            MYSQL_ROOT_PASSWORD: password
+        volumes:
+            - ./database/data.sql:/docker-entrypoint-initdb.d/data.sql
+                
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        links:
+            - mysql:db
+        ports: 
+            - "8082:80"
+        environment: 
+            - PMA_USER=root
+            - PMA_PASSWORD=password
+            - UPLOAD_LIMIT=300M
+    
+    prestashop:
+        depends_on:
+            - mysql
+        image: prestashop/prestashop:latest
+        restart: always
+        ports:
+            - 80:80
+        environment:
+            DB_SERVER: mysql
+            DB_USER: ${db_user}
+            DB_PASSWORD: ${db_password}
+            DB_NAME: ${db_name}
+            DB_PREFIX: ks_
+            PS_DEV_MODE: 1
+        volumes: 
+            - ./prestashop/:/var/www/html/
